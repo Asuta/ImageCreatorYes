@@ -168,14 +168,16 @@
 
     for (const imageUrl of images) {
       const card = imageCardTemplate.content.cloneNode(true);
-      const img = card.querySelector('img');
-      const link = card.querySelector('a');
+    const img = card.querySelector('img');
+    const link = card.querySelector('a');
+    const cutoutButton = card.querySelector('.cutout-button');
 
-      img.src = imageUrl;
-      link.href = imageUrl;
-      link.textContent = '打开原图';
-      fragment.appendChild(card);
-    }
+    img.src = imageUrl;
+    link.href = imageUrl;
+    link.textContent = '打开原图';
+    cutoutButton.addEventListener('click', () => createCutout(card, imageUrl));
+    fragment.appendChild(card);
+  }
 
     results.replaceChildren(fragment);
   }
@@ -187,6 +189,55 @@
 
   function setStatus(message) {
     statusText.textContent = message;
+  }
+
+  async function createCutout(card, imageUrl) {
+    const button = card.querySelector('.cutout-button');
+    const status = card.querySelector('.cutout-status');
+    const result = card.querySelector('.cutout-result');
+
+    button.disabled = true;
+    button.textContent = '抠图中…';
+    status.textContent = '正在调用本地抠图工具，首次运行可能需要下载模型。';
+    result.replaceChildren();
+
+    try {
+      const response = await fetch('/api/cutout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl }),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.error || '抠图失败');
+      }
+
+      renderCutoutResult(result, responseBody.imageUrl);
+      status.textContent = '抠图完成。';
+    } catch (error) {
+      status.textContent = `抠图失败：${error.message}`;
+    } finally {
+      button.disabled = false;
+      button.textContent = '重新抠图';
+    }
+  }
+
+  function renderCutoutResult(container, imageUrl) {
+    const image = document.createElement('img');
+    const link = document.createElement('a');
+
+    image.src = imageUrl;
+    image.alt = '透明背景 PNG';
+    image.loading = 'lazy';
+    link.href = imageUrl;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    link.textContent = '打开 PNG';
+
+    container.replaceChildren(image, link);
   }
 
   function ingestReferenceFiles(files) {

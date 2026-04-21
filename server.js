@@ -4,10 +4,14 @@ const path = require('node:path');
 const { URL } = require('node:url');
 
 const { buildGenerationPayload, extractImageUrls } = require('./src/imageApi');
+const { createCutoutService } = require('./src/cutoutService');
 
 const host = '127.0.0.1';
 const port = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, 'public');
+const generatedDir = path.join(__dirname, 'generated');
+const cutoutOutputDir = path.join(generatedDir, 'cutouts');
+const cutoutWorkDir = path.join(__dirname, 'tmp', 'cutout');
 
 loadEnvFile(path.join(__dirname, '.env'));
 
@@ -28,6 +32,11 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && requestUrl.pathname === '/api/generate') {
       await handleGenerate(req, res);
+      return;
+    }
+
+    if (req.method === 'POST' && requestUrl.pathname === '/api/cutout') {
+      await handleCutout(req, res);
       return;
     }
 
@@ -87,11 +96,33 @@ async function handleGenerate(req, res) {
   });
 }
 
-async function serveStaticFile(requestPath, res) {
-  const safePath = requestPath === '/' ? '/index.html' : requestPath;
-  const filePath = path.normalize(path.join(publicDir, safePath));
+async function handleCutout(req, res) {
+  const rawBody = await readRequestBody(req);
+  const requestBody = rawBody ? JSON.parse(rawBody) : {};
+  const service = createCutoutService({
+    removerPath: process.env.BRAINDEAD_BG_REMOVER_PATH,
+    workDir: cutoutWorkDir,
+    outputDir: cutoutOutputDir,
+  });
 
-  if (!filePath.startsWith(publicDir)) {
+  const result = await service.createCutout(requestBody.imageUrl);
+  sendJson(res, 200, result);
+}
+
+async function serveStaticFile(requestPath, res) {
+  if (requestPath.startsWith('/generated/')) {
+    await serveFileFromDirectory(requestPath.replace('/generated/', ''), generatedDir, res);
+    return;
+  }
+
+  const safePath = requestPath === '/' ? '/index.html' : requestPath;
+  await serveFileFromDirectory(safePath, publicDir, res);
+}
+
+async function serveFileFromDirectory(requestPath, rootDir, res) {
+  const filePath = path.normalize(path.join(rootDir, requestPath));
+
+  if (!filePath.startsWith(rootDir)) {
     sendJson(res, 403, { error: 'Forbidden' });
     return;
   }

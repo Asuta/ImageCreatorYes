@@ -36,10 +36,6 @@
 
 - `BRAINDEAD_BG_REMOVER_PATH`：本地 `BrainDeadBGRemover.exe` 绝对路径
 
-可选增强（第一版可不启用）：
-
-- `BRAINDEAD_BG_OUTPUT_DIR`：抠图输出目录，默认项目内 `generated/cutouts`
-
 若未配置 EXE 路径，后端返回清晰错误信息，引导用户补充配置。
 
 ## 后端设计
@@ -77,7 +73,7 @@
 ### 文件组织
 
 - 临时输入目录：项目内临时目录，例如 `tmp/cutout`
-- 输出目录：`generated/cutouts`
+- 输出目录：项目内 `generated/cutouts`
 
 Node 服务需要为输出目录提供静态访问能力。
 
