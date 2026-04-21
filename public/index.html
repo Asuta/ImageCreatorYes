@@ -48,7 +48,11 @@
               multiple
             />
           </label>
+          <div id="reference-dropzone" class="dropzone" tabindex="0">
+            拖拽图片到这里，或点击上面的选择框添加参考图
+          </div>
           <div id="reference-summary" class="hint">未选择参考图</div>
+          <div id="reference-preview-list" class="reference-preview-list"></div>
 
           <label>
             图片尺寸
@@ -94,6 +98,22 @@
       </article>
     </template>
 
+    <template id="reference-preview-template">
+      <article class="reference-card" draggable="true">
+        <img alt="参考图缩略图" loading="lazy" />
+        <div class="reference-meta">
+          <strong class="reference-name"></strong>
+          <span class="reference-order"></span>
+        </div>
+        <div class="reference-actions">
+          <button type="button" class="move-left">左移</button>
+          <button type="button" class="move-right">右移</button>
+          <button type="button" class="remove-reference danger">删除</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="/referenceImages.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

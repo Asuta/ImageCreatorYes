@@ -5,31 +5,111 @@ const results = document.getElementById('results');
 const imageCardTemplate = document.getElementById('image-card-template');
 const referenceInput = document.getElementById('reference-images');
 const referenceSummary = document.getElementById('reference-summary');
+const referenceDropzone = document.getElementById('reference-dropzone');
+const referencePreviewList = document.getElementById('reference-preview-list');
+const referencePreviewTemplate = document.getElementById('reference-preview-template');
+const {
+  MAX_REFERENCE_IMAGES,
+  addReferenceImages,
+  moveReferenceImage,
+  removeReferenceImage,
+} = window.referenceImageTools;
+
+let referenceItems = [];
+let draggedReferenceId = null;
 
 referenceInput.addEventListener('change', () => {
-  const files = Array.from(referenceInput.files || []);
+  ingestReferenceFiles(Array.from(referenceInput.files || []));
+  referenceInput.value = '';
+});
 
-  if (files.length > 3) {
-    referenceInput.value = '';
-    referenceSummary.textContent = '最多只能选择 3 张参考图。';
+referenceDropzone.addEventListener('dragover', (event) => {
+  event.preventDefault();
+  referenceDropzone.classList.add('dragover');
+});
+
+referenceDropzone.addEventListener('dragleave', () => {
+  referenceDropzone.classList.remove('dragover');
+});
+
+referenceDropzone.addEventListener('drop', (event) => {
+  event.preventDefault();
+  referenceDropzone.classList.remove('dragover');
+  ingestReferenceFiles(Array.from(event.dataTransfer?.files || []));
+});
+
+referencePreviewList.addEventListener('click', (event) => {
+  const card = event.target.closest('.reference-card');
+  if (!card) {
     return;
   }
 
-  referenceSummary.textContent = files.length
-    ? `已选择 ${files.length} 张：${files.map((file) => file.name).join('、')}`
-    : '未选择参考图';
+  const index = Number(card.dataset.index);
+  const id = card.dataset.id;
+
+  if (event.target.matches('.remove-reference')) {
+    clearPreviewUrl(id);
+    referenceItems = removeReferenceImage(referenceItems, id);
+    renderReferenceItems();
+    return;
+  }
+
+  if (event.target.matches('.move-left')) {
+    referenceItems = moveReferenceImage(referenceItems, index, index - 1);
+    renderReferenceItems();
+    return;
+  }
+
+  if (event.target.matches('.move-right')) {
+    referenceItems = moveReferenceImage(referenceItems, index, index + 1);
+    renderReferenceItems();
+  }
+});
+
+referencePreviewList.addEventListener('dragstart', (event) => {
+  const card = event.target.closest('.reference-card');
+  if (!card) {
+    return;
+  }
+
+  draggedReferenceId = card.dataset.id;
+  card.classList.add('dragging');
+});
+
+referencePreviewList.addEventListener('dragend', (event) => {
+  const card = event.target.closest('.reference-card');
+  if (card) {
+    card.classList.remove('dragging');
+  }
+  draggedReferenceId = null;
+});
+
+referencePreviewList.addEventListener('dragover', (event) => {
+  event.preventDefault();
+});
+
+referencePreviewList.addEventListener('drop', (event) => {
+  event.preventDefault();
+  const card = event.target.closest('.reference-card');
+  if (!card || !draggedReferenceId) {
+    return;
+  }
+
+  const fromIndex = referenceItems.findIndex((item) => item.id === draggedReferenceId);
+  const toIndex = Number(card.dataset.index);
+
+  if (fromIndex === -1 || Number.isNaN(toIndex)) {
+    return;
+  }
+
+  referenceItems = moveReferenceImage(referenceItems, fromIndex, toIndex);
+  renderReferenceItems();
 });
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const formData = new FormData(form);
-  const referenceFiles = Array.from(referenceInput.files || []);
-
-  if (referenceFiles.length > 3) {
-    setStatus('最多只能上传 3 张参考图。');
-    return;
-  }
 
   setLoading(true);
   setStatus('正在生成图片，请稍候…');
@@ -44,7 +124,7 @@ form.addEventListener('submit', async (event) => {
       count: formData.get('count'),
       promptExtend: formData.get('promptExtend') === 'on',
       watermark: formData.get('watermark') === 'on',
-      referenceImages: await Promise.all(referenceFiles.map(readFileAsDataUrl)),
+      referenceImages: await Promise.all(referenceItems.map((item) => readFileAsDataUrl(item.file))),
     };
 
     const response = await fetch('/api/generate', {
@@ -101,6 +181,73 @@ function setLoading(isLoading) {
 
 function setStatus(message) {
   statusText.textContent = message;
+}
+
+function ingestReferenceFiles(files) {
+  const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+
+  if (!imageFiles.length) {
+    updateReferenceSummary('未选择参考图');
+    return;
+  }
+
+  const newItems = imageFiles.map((file) => ({
+    id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+    file,
+    name: file.name,
+    previewUrl: URL.createObjectURL(file),
+  }));
+
+  try {
+    referenceItems = addReferenceImages(referenceItems, newItems);
+    renderReferenceItems();
+  } catch (error) {
+    newItems.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    updateReferenceSummary(error.message);
+    setStatus(error.message);
+  }
+}
+
+function renderReferenceItems() {
+  const fragment = document.createDocumentFragment();
+
+  referenceItems.forEach((item, index) => {
+    const card = referencePreviewTemplate.content.cloneNode(true);
+    const article = card.querySelector('.reference-card');
+    const image = card.querySelector('img');
+    const name = card.querySelector('.reference-name');
+    const order = card.querySelector('.reference-order');
+    const moveLeft = card.querySelector('.move-left');
+    const moveRight = card.querySelector('.move-right');
+
+    article.dataset.id = item.id;
+    article.dataset.index = String(index);
+    image.src = item.previewUrl;
+    name.textContent = item.name;
+    order.textContent = `第 ${index + 1} 张`;
+    moveLeft.disabled = index === 0;
+    moveRight.disabled = index === referenceItems.length - 1;
+
+    fragment.appendChild(card);
+  });
+
+  referencePreviewList.replaceChildren(fragment);
+  updateReferenceSummary(
+    referenceItems.length
+      ? `已选择 ${referenceItems.length} / ${MAX_REFERENCE_IMAGES} 张，可拖拽排序`
+      : '未选择参考图',
+  );
+}
+
+function clearPreviewUrl(id) {
+  const target = referenceItems.find((item) => item.id === id);
+  if (target?.previewUrl) {
+    URL.revokeObjectURL(target.previewUrl);
+  }
+}
+
+function updateReferenceSummary(message) {
+  referenceSummary.textContent = message;
 }
 
 function readFileAsDataUrl(file) {
