@@ -23,6 +23,8 @@ function buildGenerationPayload(options) {
   const count = Number.parseInt(options.count, 10);
   const n = Number.isFinite(count) ? Math.min(Math.max(count, 1), 4) : 1;
 
+  const referenceContent = normalizeReferenceImages(options.referenceImages);
+
   return {
     model: options.model || DEFAULT_MODEL,
     input: {
@@ -30,6 +32,7 @@ function buildGenerationPayload(options) {
         {
           role: 'user',
           content: [
+            ...referenceContent,
             {
               text: prompt,
             },
@@ -75,8 +78,29 @@ function extractImageUrls(responseBody) {
   return urls;
 }
 
+function normalizeReferenceImages(referenceImages) {
+  if (!Array.isArray(referenceImages) || referenceImages.length === 0) {
+    return [];
+  }
+
+  if (referenceImages.length > 3) {
+    throw new Error('You can upload at most 3 reference images');
+  }
+
+  return referenceImages.map((image) => {
+    const value = String(image || '').trim();
+
+    if (!value.startsWith('data:image/')) {
+      throw new Error('Invalid reference image');
+    }
+
+    return { image: value };
+  });
+}
+
 module.exports = {
   buildGenerationPayload,
   extractImageUrls,
   normalizeSize,
+  normalizeReferenceImages,
 };

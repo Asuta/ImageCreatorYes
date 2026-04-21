@@ -74,6 +74,13 @@ body {
   resize: vertical;
 }
 
+.hint {
+  margin-top: -4px;
+  color: #aab6d3;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .checkbox {
   grid-auto-flow: column;
   justify-content: start;
@@ -122,6 +129,10 @@ body {
   padding: 12px 14px;
   color: #9fb7ff;
   text-decoration: none;
+}
+
+.card a.download {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 @media (max-width: 900px) {

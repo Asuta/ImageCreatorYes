@@ -38,6 +38,18 @@
             <input name="negativePrompt" type="text" placeholder="可选，例如：低清晰度、模糊" />
           </label>
 
+          <label class="full">
+            参考图（最多 3 张）
+            <input
+              name="referenceImages"
+              id="reference-images"
+              type="file"
+              accept="image/*"
+              multiple
+            />
+          </label>
+          <div id="reference-summary" class="hint">未选择参考图</div>
+
           <label>
             图片尺寸
             <select name="size">

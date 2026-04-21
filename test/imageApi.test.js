@@ -61,3 +61,51 @@ test('normalizes common image size input', () => {
   assert.equal(normalizeSize('1024*1024'), '1024*1024');
   assert.throws(() => normalizeSize('wide'), /Invalid image size/);
 });
+
+test('adds reference images before prompt text in content array', () => {
+  const payload = buildGenerationPayload({
+    model: 'qwen-image-2.0-pro',
+    prompt: '做成玻璃花房风格',
+    referenceImages: ['data:image/png;base64,aaa', 'data:image/jpeg;base64,bbb'],
+  });
+
+  assert.deepEqual(payload.input.messages[0].content, [
+    { image: 'data:image/png;base64,aaa' },
+    { image: 'data:image/jpeg;base64,bbb' },
+    { text: '做成玻璃花房风格' },
+  ]);
+});
+
+test('rejects more than three reference images', () => {
+  assert.throws(
+    () =>
+      buildGenerationPayload({
+        model: 'qwen-image-2.0',
+        prompt: 'test',
+        referenceImages: ['1', '2', '3', '4'],
+      }),
+    /at most 3 reference images/,
+  );
+});
+
+test('rejects empty or invalid reference image entries', () => {
+  assert.throws(
+    () =>
+      buildGenerationPayload({
+        model: 'qwen-image-2.0',
+        prompt: 'test',
+        referenceImages: [''],
+      }),
+    /Invalid reference image/,
+  );
+
+  assert.throws(
+    () =>
+      buildGenerationPayload({
+        model: 'qwen-image-2.0',
+        prompt: 'test',
+        referenceImages: ['https://example.com/x.png'],
+      }),
+    /Invalid reference image/,
+  );
+});
