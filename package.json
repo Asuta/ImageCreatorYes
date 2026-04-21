@@ -1,0 +1,10 @@
+{
+  "name": "image-creator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple web app for qwen-image generation",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  }
+}

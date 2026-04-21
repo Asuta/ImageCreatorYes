@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qwen 生图控制台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel">
+        <div class="panel-header">
+          <h1>Qwen 生图控制台</h1>
+          <p>调用 `qwen-image-2.0` / `qwen-image-2.0-pro` 生成图片。</p>
+        </div>
+
+        <form id="image-form" class="form">
+          <label>
+            模型
+            <select name="model">
+              <option value="qwen-image-2.0">qwen-image-2.0</option>
+              <option value="qwen-image-2.0-pro">qwen-image-2.0-pro</option>
+            </select>
+          </label>
+
+          <label class="full">
+            提示词
+            <textarea
+              name="prompt"
+              rows="4"
+              placeholder="请输入你想生成的图片描述"
+              required
+            ></textarea>
+          </label>
+
+          <label class="full">
+            反向提示词
+            <input name="negativePrompt" type="text" placeholder="可选，例如：低清晰度、模糊" />
+          </label>
+
+          <label>
+            图片尺寸
+            <select name="size">
+              <option value="1024*1024">1024 × 1024</option>
+              <option value="1280*720">1280 × 720</option>
+              <option value="720*1280">720 × 1280</option>
+            </select>
+          </label>
+
+          <label>
+            生成数量
+            <input name="count" type="number" min="1" max="4" value="1" />
+          </label>
+
+          <label class="checkbox">
+            <input name="promptExtend" type="checkbox" checked />
+            开启提示词扩写
+          </label>
+
+          <label class="checkbox">
+            <input name="watermark" type="checkbox" />
+            添加水印
+          </label>
+
+          <button type="submit" id="submit-button">开始生成</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>生成结果</h2>
+          <p id="status-text">填写提示词后开始生成。</p>
+        </div>
+        <div id="results" class="results"></div>
+      </section>
+    </main>
+
+    <template id="image-card-template">
+      <article class="card">
+        <img alt="生成结果" loading="lazy" />
+        <a target="_blank" rel="noreferrer">打开原图</a>
+      </article>
+    </template>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
