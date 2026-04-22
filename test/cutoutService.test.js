@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const {
+  buildProcessInvocation,
   buildCutoutPaths,
   createCutoutService,
   validateCutoutConfig,
@@ -74,4 +75,27 @@ test('runs a configured command and returns a public cutout url', async () => {
     fs.readFileSync(path.join(outputDir, 'cutout-test.png'), 'utf8'),
     'fake png',
   );
+});
+
+test('validateCutoutConfig accepts an existing cmd wrapper path', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cutout-wrapper-'));
+  const wrapperPath = path.join(root, 'braindead-cutout.cmd');
+  fs.writeFileSync(wrapperPath, '@echo off');
+
+  assert.doesNotThrow(() =>
+    validateCutoutConfig({ removerPath: wrapperPath }),
+  );
+});
+
+test('wraps cmd scripts with cmd.exe on windows', () => {
+  const invocation = buildProcessInvocation('D:\\Project\\imageCreator\\tools\\braindead-cutout.cmd', [
+    'D:\\temp\\input.png',
+  ]);
+
+  assert.equal(invocation.command.toLowerCase(), 'cmd.exe');
+  assert.deepEqual(invocation.args, [
+    '/c',
+    'D:\\Project\\imageCreator\\tools\\braindead-cutout.cmd',
+    'D:\\temp\\input.png',
+  ]);
 });

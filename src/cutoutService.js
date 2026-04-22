@@ -105,8 +105,10 @@ async function downloadImage(imageUrl) {
 }
 
 function runProcess(command, args) {
+  const invocation = buildProcessInvocation(command, args);
+
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawn(invocation.command, invocation.args, {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -131,7 +133,22 @@ function runProcess(command, args) {
   });
 }
 
+function buildProcessInvocation(command, args) {
+  if (/\.(cmd|bat)$/i.test(command)) {
+    return {
+      command: 'cmd.exe',
+      args: ['/c', command, ...args],
+    };
+  }
+
+  return {
+    command,
+    args,
+  };
+}
+
 module.exports = {
+  buildProcessInvocation,
   buildCutoutPaths,
   createCutoutService,
   validateCutoutConfig,

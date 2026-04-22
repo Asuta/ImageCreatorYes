@@ -21,8 +21,9 @@
 
 ## 本地抠图配置
 
-1. 下载并准备 `BrainDeadBGRemover.exe`
+1. 下载并准备本地抠图工具，或使用项目内的 `tools/braindead-cutout.cmd`
 2. 在 `.env` 中设置 `BRAINDEAD_BG_REMOVER_PATH`
-3. 生成图片后点击结果卡片里的“抠成 PNG”
+3. 可选设置 `BRAINDEAD_BG_MODEL`，默认 `birefnet-general-lite`
+4. 生成图片后点击结果卡片里的“抠成 PNG”
 
-注意：当前集成通过本地命令调用，并期望工具接收输入图片路径后在同目录生成 `_nobg.png`。如果你下载的 `BrainDeadBGRemover.exe` 仅支持 GUI 拖拽而不支持命令行，需要使用一个 CLI 包装脚本连接它的处理流程。
+注意：当前集成通过本地命令调用，并期望工具接收输入图片路径后在同目录生成 `_nobg.png`。项目现在已经内置了 `tools/braindead-cutout.cmd + tools/braindead_cutout.py` 包装器，使用与 BrainDead 自动模式一致的 `rembg + BiRefNet` 本地处理链路。

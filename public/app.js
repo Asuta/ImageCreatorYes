@@ -167,7 +167,8 @@
     const fragment = document.createDocumentFragment();
 
     for (const imageUrl of images) {
-      const card = imageCardTemplate.content.cloneNode(true);
+    const card = imageCardTemplate.content.cloneNode(true);
+    const article = card.querySelector('.card');
     const img = card.querySelector('img');
     const link = card.querySelector('a');
     const cutoutButton = card.querySelector('.cutout-button');
@@ -175,7 +176,7 @@
     img.src = imageUrl;
     link.href = imageUrl;
     link.textContent = '打开原图';
-    cutoutButton.addEventListener('click', () => createCutout(card, imageUrl));
+    cutoutButton.addEventListener('click', () => createCutout(article, imageUrl));
     fragment.appendChild(card);
   }
 
