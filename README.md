@@ -21,16 +21,22 @@
 
 ## 本地抠图配置
 
-1. 下载并准备本地抠图工具，或使用项目内的 `tools/braindead-cutout.cmd`
+1. 推荐直接使用项目内的 `tools/braindead-cutout-dml.cmd`
 2. 在 `.env` 中设置 `BRAINDEAD_BG_REMOVER_PATH`
-3. 可选设置 `BRAINDEAD_BG_MODEL`，默认 `birefnet-general-lite`
+3. 可选设置 `BRAINDEAD_BG_MODEL`，当前推荐 `u2net_human_seg`
 4. 可选设置 `BRAINDEAD_BG_DEVICE`
 5. 生成图片后点击结果卡片里的“抠成 PNG”
 
 `BRAINDEAD_BG_DEVICE` 支持：
 
-- `auto`：优先 CUDA，不可用则退回 CPU
+- `auto`：优先 CUDA / DirectML，不可用则退回 CPU
 - `gpu`：强制使用 CUDA，不可用时报错
+- `dml`：强制使用 DirectML，不可用时报错
 - `cpu`：强制使用 CPU
 
-注意：当前集成通过本地命令调用，并期望工具接收输入图片路径后在同目录生成 `_nobg.png`。项目现在已经内置了 `tools/braindead-cutout.cmd + tools/braindead_cutout.py` 包装器，使用与 BrainDead 自动模式一致的 `rembg + BiRefNet` 本地处理链路。
+注意：
+
+- 当前集成通过本地命令调用，并期望工具接收输入图片路径后在同目录生成 `_nobg.png`
+- 项目内置了 `tools/braindead-cutout.cmd` 与 `tools/braindead-cutout-dml.cmd` 两套包装器，统一调用 `tools/braindead_cutout.py`
+- 在这台 Windows 机器上，CUDA 路径已经验证过存在兼容性问题；当前更稳的方案是 `DirectML + u2net_human_seg`
+- `tools/.venv-dml` 首次配置完成后会保留在本地，后续重启项目不会重复下载模型和依赖，除非你手动删除对应缓存或虚拟环境

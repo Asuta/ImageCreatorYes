@@ -3,4 +3,9 @@ node_modules
 generated
 tmp
 tools/.venv-braindead
+tools/.venv-dml
 tools/BrainDeadBGRemover.exe
+tmp-dml-err.txt
+tmp-dml-out.txt
+tmp-dml-test.png
+tmp-dml-test_nobg.png

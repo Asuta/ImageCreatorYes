@@ -51,6 +51,13 @@ def select_providers(device: str) -> list[str]:
     if device == "cpu":
         return ["CPUExecutionProvider"]
 
+    if device == "dml":
+        if "DmlExecutionProvider" not in available:
+            raise RuntimeError(
+                f"DirectML mode requested but DmlExecutionProvider is unavailable. Available providers: {available}"
+            )
+        return ["DmlExecutionProvider", "CPUExecutionProvider"]
+
     if device == "gpu":
         if "CUDAExecutionProvider" not in available:
             raise RuntimeError(
@@ -61,9 +68,11 @@ def select_providers(device: str) -> list[str]:
     if device == "auto":
         if "CUDAExecutionProvider" in available:
             return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+        if "DmlExecutionProvider" in available:
+            return ["DmlExecutionProvider", "CPUExecutionProvider"]
         return ["CPUExecutionProvider"]
 
-    raise RuntimeError("BRAINDEAD_BG_DEVICE must be one of: auto, gpu, cpu")
+    raise RuntimeError("BRAINDEAD_BG_DEVICE must be one of: auto, gpu, dml, cpu")
 
 
 if __name__ == "__main__":
