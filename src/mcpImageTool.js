@@ -1,12 +1,9 @@
-const fs = require('node:fs');
-const path = require('node:path');
 const { normalizeMcpImageRequest } = require('./mcpImageOptions');
 
 async function executeGenerateImageTool(input, options = {}) {
   const normalizeRequest = options.normalizeRequest || normalizeMcpImageRequest;
   const generationService = options.generationService;
   const cutoutService = options.cutoutService;
-  const downloadBinary = options.downloadBinary || defaultDownloadBinary;
 
   if (!generationService?.generateOneImage) {
     throw new Error('generationService.generateOneImage is required');
@@ -34,28 +31,15 @@ async function executeGenerateImageTool(input, options = {}) {
     cutoutApplied = true;
   }
 
-  const finalBinary = await downloadBinary(finalBinarySource);
-  const imageBase64 = Buffer.from(finalBinary.bytes).toString('base64');
-
   return {
     imageUrl: finalImageUrl,
-    mimeType: finalBinary.mimeType,
     cutoutApplied,
     cutoutModel,
     content: [
       {
-        type: 'image',
-        data: imageBase64,
-        mimeType: finalBinary.mimeType,
-      },
-      {
         type: 'text',
         text: buildSummary({
-          prompt: normalized.prompt,
-          size: normalized.generation.size,
           imageUrl: finalImageUrl,
-          cutoutApplied,
-          cutoutModel,
         }),
       },
     ],
@@ -63,52 +47,10 @@ async function executeGenerateImageTool(input, options = {}) {
 }
 
 function buildSummary(details) {
-  return [
-    `Prompt: ${details.prompt}`,
-    `Size: ${details.size}`,
-    `Cutout: ${details.cutoutApplied ? `enabled (${details.cutoutModel})` : 'disabled'}`,
-    `Image URL: ${details.imageUrl}`,
-  ].join('\n');
-}
-
-async function defaultDownloadBinary(urlOrPath) {
-  if (/^https?:\/\//i.test(urlOrPath)) {
-    const response = await fetch(urlOrPath);
-
-    if (!response.ok) {
-      throw new Error(`Failed to download image: HTTP ${response.status}`);
-    }
-
-    return {
-      bytes: Buffer.from(await response.arrayBuffer()),
-      mimeType: response.headers.get('content-type') || inferMimeType(urlOrPath),
-    };
-  }
-
-  return {
-    bytes: await fs.promises.readFile(urlOrPath),
-    mimeType: inferMimeType(urlOrPath),
-  };
-}
-
-function inferMimeType(filePath) {
-  const extension = path.extname(filePath).toLowerCase();
-
-  if (extension === '.png') {
-    return 'image/png';
-  }
-  if (extension === '.jpg' || extension === '.jpeg') {
-    return 'image/jpeg';
-  }
-  if (extension === '.webp') {
-    return 'image/webp';
-  }
-
-  return 'application/octet-stream';
+  return details.imageUrl;
 }
 
 module.exports = {
   executeGenerateImageTool,
   buildSummary,
-  defaultDownloadBinary,
 };

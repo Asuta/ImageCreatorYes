@@ -18,6 +18,17 @@
 
 当前 MCP Server 暴露 1 个工具：`generate_image`
 
+本地调试 MCP 时，统一使用这个正式脚本：
+
+- `npm run mcp:test -- --prompt-file .\\prompts\\puppy-zh.txt --output puppy-zh`
+
+说明：
+
+- 中文提示词统一放进 UTF-8 文本文件，再通过 `--prompt-file` 传入
+- 这是现在唯一保留的正式命令行调试链路
+- 不再建议使用 PowerShell here-string / stdin 管道把脚本直接喂给 `node`
+- 也不再保留直接 `--prompt` 文本输入的旧调试方式
+
 支持参数：
 
 - `prompt`
@@ -36,7 +47,7 @@
 
 - 固定返回 1 张图片
 - `cutout = true` 时返回透明背景 PNG
-- 工具结果里同时包含 `image` 内容和一段文本摘要
+- 工具结果只返回最终图片链接，不返回 base64 图片内容
 
 ## 特性
 

@@ -20,17 +20,16 @@ test('generates one image and returns MCP-ready content without cutout', async (
           raw: {},
         }),
       },
-      downloadBinary: async () => ({
-        bytes: Buffer.from('image-bytes'),
-        mimeType: 'image/png',
-      }),
     },
   );
 
   assert.equal(result.imageUrl, 'https://example.com/a.png');
-  assert.equal(result.mimeType, 'image/png');
-  assert.equal(result.content[0].type, 'image');
-  assert.equal(result.content[1].type, 'text');
+  assert.deepEqual(result.content, [
+    {
+      type: 'text',
+      text: 'https://example.com/a.png',
+    },
+  ]);
 });
 
 test('runs cutout and returns the cutout result when enabled', async () => {
@@ -58,17 +57,16 @@ test('runs cutout and returns the cutout result when enabled', async () => {
           model: 'isnet-general-use',
         }),
       },
-      downloadBinary: async (urlOrPath) => {
-        assert.equal(urlOrPath, 'D:/Project/imageCreator/generated/cutouts/a.png');
-        return {
-          bytes: Buffer.from('cutout-bytes'),
-          mimeType: 'image/png',
-        };
-      },
     },
   );
 
   assert.equal(result.imageUrl, '/generated/cutouts/a.png');
   assert.equal(result.cutoutApplied, true);
   assert.equal(result.cutoutModel, 'isnet-general-use');
+  assert.deepEqual(result.content, [
+    {
+      type: 'text',
+      text: '/generated/cutouts/a.png',
+    },
+  ]);
 });
