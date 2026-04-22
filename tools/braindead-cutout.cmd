@@ -12,4 +12,8 @@ if "%BRAINDEAD_BG_MODEL%"=="" (
   set BRAINDEAD_BG_MODEL=birefnet-general-lite
 )
 
+if "%BRAINDEAD_BG_DEVICE%"=="" (
+  set BRAINDEAD_BG_DEVICE=auto
+)
+
 "%VENV_PYTHON%" "%SCRIPT_DIR%braindead_cutout.py" "%~1" "%BRAINDEAD_BG_MODEL%"
