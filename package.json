@@ -4,7 +4,12 @@
   "private": true,
   "description": "Simple web app for qwen-image generation",
   "scripts": {
+    "mcp:start": "node mcp/server.mjs",
     "start": "node server.js",
     "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.3.6"
   }
 }

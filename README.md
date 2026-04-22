@@ -1,6 +1,6 @@
 # Qwen 生图网页
 
-一个最小可运行的网页项目，用于调用 `https://token.fun.tv/v1/images/generations` 生成图片。
+一个最小可运行的网页项目，同时也提供一个 MCP Server，用于调用 `https://token.fun.tv/v1/images/generations` 生成图片。
 
 ## 使用方式
 
@@ -8,6 +8,35 @@
 2. 在 `.env` 中填写 `IMAGE_API_KEY`
 3. 运行 `npm start`
 4. 打开 `http://127.0.0.1:3000`
+
+## MCP 使用方式
+
+1. 复制 `.env.example` 为 `.env`
+2. 在 `.env` 中填写 `IMAGE_API_KEY`
+3. 运行 `npm install`
+4. 启动 MCP Server：`npm run mcp:start`
+
+当前 MCP Server 暴露 1 个工具：`generate_image`
+
+支持参数：
+
+- `prompt`
+- `referenceImages`：最多 3 张，支持 `data:` 或 `http(s)` 图片地址
+- `cutout`
+- `cutoutModel`
+- `size`
+- `aspectRatio`
+- `resolution`
+- `model`
+- `negativePrompt`
+- `promptExtend`
+- `watermark`
+
+返回结果：
+
+- 固定返回 1 张图片
+- `cutout = true` 时返回透明背景 PNG
+- 工具结果里同时包含 `image` 内容和一段文本摘要
 
 ## 特性
 

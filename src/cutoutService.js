@@ -82,6 +82,7 @@ function createCutoutService(options) {
 
       return {
         imageUrl: paths.publicUrl,
+        localPath: paths.finalOutputPath,
         model: selectedModel,
       };
     },

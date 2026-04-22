@@ -72,6 +72,7 @@ test('runs a configured command and returns a public cutout url', async () => {
 
   assert.deepEqual(result, {
     imageUrl: '/generated/cutouts/cutout-test.png',
+    localPath: path.join(outputDir, 'cutout-test.png'),
     model: DEFAULT_CUTOUT_MODEL,
   });
   assert.equal(
