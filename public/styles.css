@@ -214,6 +214,31 @@ body {
   text-decoration: none;
 }
 
+.cutout-model-field {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
+  color: #d8e1f5;
+  font-size: 13px;
+}
+
+.cutout-model-field select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0e1320;
+  color: #f3f7ff;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.cutout-model-hint {
+  margin: -4px 12px 12px;
+  color: #aab6d3;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .card a.download {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }

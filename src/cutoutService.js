@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const crypto = require('node:crypto');
+const { normalizeCutoutModel } = require('./cutoutModels');
 
 function validateCutoutConfig(config) {
   if (!config.removerPath) {
@@ -35,15 +36,19 @@ function createCutoutService(options) {
     workDir: options.workDir,
     outputDir: options.outputDir,
     removerPath: options.removerPath,
+    defaultModel: options.defaultModel,
     runProcess: options.runProcess || runProcess,
     downloadImage: options.downloadImage || downloadImage,
     idFactory: options.idFactory || (() => crypto.randomUUID()),
   };
 
   return {
-    async createCutout(imageUrl) {
+    async createCutout(imageUrl, requestOptions = {}) {
       validateImageUrl(imageUrl);
       validateCutoutConfig(serviceOptions);
+      const selectedModel = normalizeCutoutModel(
+        requestOptions.model || serviceOptions.defaultModel,
+      );
 
       await fs.promises.mkdir(serviceOptions.workDir, { recursive: true });
       await fs.promises.mkdir(serviceOptions.outputDir, { recursive: true });
@@ -61,7 +66,7 @@ function createCutoutService(options) {
       await fs.promises.writeFile(paths.inputPath, bytes);
 
       try {
-        await serviceOptions.runProcess(serviceOptions.removerPath, [paths.inputPath]);
+        await serviceOptions.runProcess(serviceOptions.removerPath, [paths.inputPath, selectedModel]);
 
         if (!fs.existsSync(paths.expectedToolOutputPath)) {
           throw new Error(
@@ -77,6 +82,7 @@ function createCutoutService(options) {
 
       return {
         imageUrl: paths.publicUrl,
+        model: selectedModel,
       };
     },
   };

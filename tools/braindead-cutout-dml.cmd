@@ -8,8 +8,12 @@ if not exist "%VENV_PYTHON%" (
   exit /b 2
 )
 
-if "%BRAINDEAD_BG_MODEL%"=="" (
-  set BRAINDEAD_BG_MODEL=u2net_human_seg
+if "%~2"=="" (
+  if "%BRAINDEAD_BG_MODEL%"=="" (
+    set BRAINDEAD_BG_MODEL=u2net_human_seg
+  )
+) else (
+  set BRAINDEAD_BG_MODEL=%~2
 )
 
 set BRAINDEAD_BG_DEVICE=dml

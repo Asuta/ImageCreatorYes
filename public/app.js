@@ -21,6 +21,10 @@
 
   let referenceItems = [];
   let draggedReferenceId = null;
+  let cutoutModels = getFallbackCutoutModels();
+  let defaultCutoutModel = cutoutModels[0]?.id || 'u2net_human_seg';
+
+  void loadCutoutModels();
 
   referenceInput.addEventListener('change', () => {
     ingestReferenceFiles(Array.from(referenceInput.files || []));
@@ -167,18 +171,21 @@
     const fragment = document.createDocumentFragment();
 
     for (const imageUrl of images) {
-    const card = imageCardTemplate.content.cloneNode(true);
-    const article = card.querySelector('.card');
-    const img = card.querySelector('img');
-    const link = card.querySelector('a');
-    const cutoutButton = card.querySelector('.cutout-button');
+      const card = imageCardTemplate.content.cloneNode(true);
+      const article = card.querySelector('.card');
+      const img = card.querySelector('img');
+      const link = card.querySelector('a');
+      const cutoutButton = card.querySelector('.cutout-button');
+      const cutoutModelSelect = card.querySelector('.cutout-model-select');
+      const cutoutModelHint = card.querySelector('.cutout-model-hint');
 
-    img.src = imageUrl;
-    link.href = imageUrl;
-    link.textContent = '打开原图';
-    cutoutButton.addEventListener('click', () => createCutout(article, imageUrl));
-    fragment.appendChild(card);
-  }
+      img.src = imageUrl;
+      link.href = imageUrl;
+      link.textContent = '打开原图';
+      populateCutoutModelSelect(cutoutModelSelect, cutoutModelHint);
+      cutoutButton.addEventListener('click', () => createCutout(article, imageUrl));
+      fragment.appendChild(card);
+    }
 
     results.replaceChildren(fragment);
   }
@@ -196,10 +203,12 @@
     const button = card.querySelector('.cutout-button');
     const status = card.querySelector('.cutout-status');
     const result = card.querySelector('.cutout-result');
+    const modelSelect = card.querySelector('.cutout-model-select');
+    const model = modelSelect?.value || defaultCutoutModel;
 
     button.disabled = true;
     button.textContent = '抠图中…';
-    status.textContent = '正在调用本地抠图工具，首次运行可能需要下载模型。';
+    status.textContent = `正在用 ${model} 抠图，首次运行某些模型可能需要下载权重。`;
     result.replaceChildren();
 
     try {
@@ -208,7 +217,7 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ imageUrl }),
+        body: JSON.stringify({ imageUrl, model }),
       });
       const responseBody = await response.json();
 
@@ -217,7 +226,7 @@
       }
 
       renderCutoutResult(result, responseBody.imageUrl);
-      status.textContent = '抠图完成。';
+      status.textContent = `抠图完成，当前模型：${responseBody.model || model}。`;
     } catch (error) {
       status.textContent = `抠图失败：${error.message}`;
     } finally {
@@ -239,6 +248,61 @@
     link.textContent = '打开 PNG';
 
     container.replaceChildren(image, link);
+  }
+
+  async function loadCutoutModels() {
+    try {
+      const response = await fetch('/api/cutout/models');
+
+      if (!response.ok) {
+        throw new Error('加载抠图模型列表失败');
+      }
+
+      const responseBody = await response.json();
+      const models = Array.isArray(responseBody.models) ? responseBody.models : [];
+
+      if (models.length) {
+        cutoutModels = models;
+        defaultCutoutModel = responseBody.defaultModel || models[0].id;
+      }
+    } catch {
+      cutoutModels = getFallbackCutoutModels();
+      defaultCutoutModel = cutoutModels[0]?.id || defaultCutoutModel;
+    }
+  }
+
+  function populateCutoutModelSelect(select, hint) {
+    if (!select) {
+      return;
+    }
+
+    const options = cutoutModels.length ? cutoutModels : getFallbackCutoutModels();
+    const fragment = document.createDocumentFragment();
+
+    options.forEach((model) => {
+      const option = document.createElement('option');
+      option.value = model.id;
+      option.textContent = model.label || model.id;
+
+      if (model.id === defaultCutoutModel) {
+        option.selected = true;
+      }
+
+      fragment.appendChild(option);
+    });
+
+    select.replaceChildren(fragment);
+    updateCutoutModelHint(select, hint, options);
+    select.addEventListener('change', () => updateCutoutModelHint(select, hint, options));
+  }
+
+  function updateCutoutModelHint(select, hint, options) {
+    if (!hint || !select) {
+      return;
+    }
+
+    const current = options.find((model) => model.id === select.value) || options[0];
+    hint.textContent = current?.description || '';
   }
 
   function ingestReferenceFiles(files) {
@@ -357,5 +421,45 @@
         return items.filter((item) => item.id !== id);
       },
     };
+  }
+
+  function getFallbackCutoutModels() {
+    return [
+      {
+        id: 'u2net_human_seg',
+        label: 'u2net_human_seg',
+        description: '人像优先，当前默认推荐',
+      },
+      {
+        id: 'u2net',
+        label: 'u2net',
+        description: '通用抠图，主体识别比较稳',
+      },
+      {
+        id: 'u2netp',
+        label: 'u2netp',
+        description: '轻量版，通常更快',
+      },
+      {
+        id: 'isnet-general-use',
+        label: 'isnet-general-use',
+        description: '通用场景，边缘通常更柔和',
+      },
+      {
+        id: 'silueta',
+        label: 'silueta',
+        description: '轻量轮廓风格，可试细边缘',
+      },
+      {
+        id: 'u2net_cloth_seg',
+        label: 'u2net_cloth_seg',
+        description: '服饰分割模型，适合试衣物边界',
+      },
+      {
+        id: 'birefnet-general-lite',
+        label: 'birefnet-general-lite',
+        description: 'BiRefNet 轻量版，可试更细抠图',
+      },
+    ];
   }
 })();

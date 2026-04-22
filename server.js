@@ -5,6 +5,7 @@ const { URL } = require('node:url');
 
 const { buildGenerationPayload, extractImageUrls } = require('./src/imageApi');
 const { createCutoutService } = require('./src/cutoutService');
+const { getCutoutModelOptions, normalizeCutoutModel } = require('./src/cutoutModels');
 
 const host = '127.0.0.1';
 const port = process.env.PORT || 3000;
@@ -37,6 +38,11 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && requestUrl.pathname === '/api/cutout') {
       await handleCutout(req, res);
+      return;
+    }
+
+    if (req.method === 'GET' && requestUrl.pathname === '/api/cutout/models') {
+      handleCutoutModels(res);
       return;
     }
 
@@ -101,12 +107,23 @@ async function handleCutout(req, res) {
   const requestBody = rawBody ? JSON.parse(rawBody) : {};
   const service = createCutoutService({
     removerPath: process.env.BRAINDEAD_BG_REMOVER_PATH,
+    defaultModel: process.env.BRAINDEAD_BG_MODEL,
     workDir: cutoutWorkDir,
     outputDir: cutoutOutputDir,
   });
 
-  const result = await service.createCutout(requestBody.imageUrl);
+  const result = await service.createCutout(requestBody.imageUrl, {
+    model: requestBody.model,
+  });
   sendJson(res, 200, result);
+}
+
+function handleCutoutModels(res) {
+  sendJson(res, 200, {
+    models: getCutoutModelOptions(),
+    defaultModel: normalizeCutoutModel(process.env.BRAINDEAD_BG_MODEL),
+    device: String(process.env.BRAINDEAD_BG_DEVICE || '').trim().toLowerCase() || 'auto',
+  });
 }
 
 async function serveStaticFile(requestPath, res) {
