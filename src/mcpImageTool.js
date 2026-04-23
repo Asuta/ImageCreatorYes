@@ -25,7 +25,7 @@ async function executeGenerateImageTool(input, options = {}) {
     const cutoutResult = await cutoutService.createCutout(generationResult.imageUrl, {
       model: normalized.cutout.model,
     });
-    finalImageUrl = cutoutResult.imageUrl;
+    finalImageUrl = cutoutResult.localPath || cutoutResult.imageUrl;
     finalBinarySource = cutoutResult.localPath || cutoutResult.imageUrl;
     cutoutModel = cutoutResult.model || normalized.cutout.model;
     cutoutApplied = true;
@@ -33,6 +33,7 @@ async function executeGenerateImageTool(input, options = {}) {
 
   return {
     imageUrl: finalImageUrl,
+    finalBinarySource,
     cutoutApplied,
     cutoutModel,
     content: [

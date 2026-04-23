@@ -51,11 +51,15 @@ try {
 
   const outputPath = path.resolve(resolveOutputPath(process.cwd(), args.output || 'output'));
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  const response = await fetch(resolveDownloadUrl(imageUrl));
-  if (!response.ok) {
-    throw new Error(`Failed to download image: HTTP ${response.status}`);
+  if (isLocalAbsolutePath(imageUrl)) {
+    await fs.copyFile(imageUrl, outputPath);
+  } else {
+    const response = await fetch(resolveDownloadUrl(imageUrl));
+    if (!response.ok) {
+      throw new Error(`Failed to download image: HTTP ${response.status}`);
+    }
+    await fs.writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
   }
-  await fs.writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
 
   console.log(`Saved image to: ${outputPath}`);
   console.log(`Image URL: ${imageUrl}`);
@@ -164,4 +168,8 @@ function resolveDownloadUrl(imageUrl) {
   }
 
   return `http://127.0.0.1:3000${imageUrl}`;
+}
+
+function isLocalAbsolutePath(imageUrl) {
+  return /^[A-Za-z]:[\\/]/.test(imageUrl) || /^\\\\/.test(imageUrl);
 }

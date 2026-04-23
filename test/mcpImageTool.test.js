@@ -60,13 +60,13 @@ test('runs cutout and returns the cutout result when enabled', async () => {
     },
   );
 
-  assert.equal(result.imageUrl, '/generated/cutouts/a.png');
+  assert.equal(result.imageUrl, 'D:/Project/imageCreator/generated/cutouts/a.png');
   assert.equal(result.cutoutApplied, true);
   assert.equal(result.cutoutModel, 'isnet-general-use');
   assert.deepEqual(result.content, [
     {
       type: 'text',
-      text: '/generated/cutouts/a.png',
+      text: 'D:/Project/imageCreator/generated/cutouts/a.png',
     },
   ]);
 });
