@@ -12,15 +12,21 @@ const { createGenerationService } = require('../src/generationService');
 const { createCutoutService } = require('../src/cutoutService');
 const { getCutoutModelOptions } = require('../src/cutoutModels');
 const { executeGenerateImageTool } = require('../src/mcpImageTool');
+const { createTempImageCache } = require('../src/tempImageCache');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
 loadEnvFile(path.join(rootDir, '.env'));
 
-const generatedDir = path.join(rootDir, 'generated');
-const cutoutOutputDir = path.join(generatedDir, 'cutouts');
-const cutoutWorkDir = path.join(rootDir, 'tmp', 'cutout');
+const imageCache = createTempImageCache({
+  cacheDir: process.env.MCP_IMAGE_CACHE_DIR,
+  ttlHours: process.env.MCP_IMAGE_CACHE_TTL_HOURS,
+  cleanupIntervalMinutes: process.env.MCP_IMAGE_CACHE_CLEANUP_INTERVAL_MINUTES,
+  maxMb: process.env.MCP_IMAGE_CACHE_MAX_MB,
+});
+
+await imageCache.cleanup({ force: true });
 
 const server = new McpServer(
   {
@@ -76,14 +82,16 @@ server.tool(
       const cutoutService = createCutoutService({
         removerPath: process.env.BRAINDEAD_BG_REMOVER_PATH,
         defaultModel: process.env.BRAINDEAD_BG_MODEL,
-        workDir: cutoutWorkDir,
-        outputDir: cutoutOutputDir,
+        workDir: imageCache.getWorkDir(),
+        outputDir: imageCache.getOutputDir(),
       });
 
-      return await executeGenerateImageTool(args, {
+      const result = await executeGenerateImageTool(args, {
         generationService,
         cutoutService,
       });
+      await imageCache.cleanupIfDue();
+      return result;
     } catch (error) {
       return {
         content: [

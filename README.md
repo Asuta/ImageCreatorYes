@@ -49,6 +49,24 @@
 - `cutout = true` 时返回透明背景 PNG
 - 工具结果只返回最终图片链接，不返回 base64 图片内容
 
+### MCP 图片缓存
+
+MCP Server 默认把抠图产生的透明 PNG 放在系统临时目录下的 `imageCreator-mcp` 缓存目录中，不再永久堆在项目 `generated` 目录里。
+
+清理规则：
+
+- MCP Server 启动时会清理一次过期缓存
+- 每次 `generate_image` 调用完成后，最多每 10 分钟检查一次缓存
+- 检查时只删除超过 TTL 的文件，默认 TTL 为 24 小时
+- 如果缓存超过容量上限，会优先删除最旧的文件
+
+可选配置：
+
+- `MCP_IMAGE_CACHE_DIR`：自定义 MCP 图片缓存目录，默认使用系统临时目录
+- `MCP_IMAGE_CACHE_TTL_HOURS`：缓存保留小时数，默认 `24`
+- `MCP_IMAGE_CACHE_CLEANUP_INTERVAL_MINUTES`：两次清理检查的最小间隔，默认 `10`
+- `MCP_IMAGE_CACHE_MAX_MB`：缓存容量上限，默认 `1024`
+
 ## 特性
 
 - 支持 `qwen-image-2.0`
